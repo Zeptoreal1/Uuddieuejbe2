@@ -1,0 +1,43 @@
+
+name: Build Mihon Chaos APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - mihon-chaos-edition-source.zip
+      - .github/workflows/build-chaos.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout ZIP
+        uses: actions/checkout@v4
+
+      - name: Unzip Mihon
+        run: unzip -q mihon-chaos-edition-source.zip
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build APK
+        working-directory: mihon-main
+        run: bash ./gradlew assembleRelease -Pdist=ci --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mihon-Chaos-APK
+          path: mihon-main/app/build/outputs/apk/release/app-arm64-v8a-release.apk
+          if-no-files-found: error
